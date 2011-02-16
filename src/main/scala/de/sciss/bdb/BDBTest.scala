@@ -6,26 +6,42 @@ import com.sleepycat.persist.{EntityStore, StoreConfig}
 import collection.JavaConversions._
 
 object BDBTest {
+   sealed trait CMD
+   case object CMD_CREATE  extends CMD
+   case object CMD_LIST    extends CMD
+   case object CMD_DELETE  extends CMD
+
    def main( args: Array[ String ]) {
-      val write = args.headOption == Some( "-w" )
-      test( write )
+      val cmd = args.headOption match {
+         case Some( "-w" ) => CMD_CREATE
+         case Some( "-d" ) => CMD_DELETE
+         case _            => CMD_LIST
+      }
+      test( cmd )
    }
 
-   def test( write: Boolean ) {
+   def test( cmd: CMD ) {
       val envCfg = new EnvironmentConfig()
-         .setAllowCreate( write )
+         .setAllowCreate( cmd == CMD_CREATE )
       val storeCfg = new StoreConfig()
-         .setAllowCreate( write )
+         .setAllowCreate( cmd == CMD_CREATE )
       try {
-         val env = new Environment( new File( "db" ), envCfg )
+         val dir  = new File( "db" )
+         dir.mkdirs()
+         val env  = new Environment( dir, envCfg )
          try {
             val store = new EntityStore( env, "EntityStore", storeCfg )
             try {
-               if( write ) writeSumdn( store ) else {
-                  readSumdn( store )
-                  reportMisses( env )
-                  readSumdn( store )
-                  reportMisses( env )
+               cmd match {
+                  case CMD_CREATE =>
+                     writeSumdn( store )
+                  case CMD_LIST =>
+                     readSumdn( store )
+                     reportMisses( env )
+                     readSumdn( store )
+                     reportMisses( env )
+                  case CMD_DELETE =>
+                     deleteSumdn( store )
                }
             } finally {
                store.close()
@@ -46,21 +62,39 @@ object BDBTest {
    }
 
    def writeSumdn( store: EntityStore ) {
-      val idx = store.getPrimaryIndex( classOf[ java.lang.Long ], classOf[ MyEntity ])
+      val idx = getPrimaryIndex( store )
       List( "Alpha", "Beta", "Gamma", "Delta" ).zipWithIndex.foreach {
-         case (name, id) => idx.put( new MyEntity( id, name ))
+         case (name, id) =>
+            val e = new MyEntity( id, name )
+            idx.put( e )
+            println( "Inserted: " + e )
+      }
+   }
+
+   def getPrimaryIndex( store: EntityStore ) = store.getPrimaryIndex( classOf[ java.lang.Long ], classOf[ MyEntity ])
+
+   def deleteSumdn( store: EntityStore ) {
+      val idx = getPrimaryIndex( store )
+      val csr = idx.entities()
+      try {
+         csr.headOption.foreach { e =>
+            idx.delete( e.id )
+            println( "Deleted: " + e )
+         }
+      } finally {
+         csr.close()
       }
    }
 
    def readSumdn( store: EntityStore ) {
-      val idx  = store.getPrimaryIndex( classOf[ java.lang.Long ], classOf[ MyEntity ])
+      val idx  = getPrimaryIndex( store )
 //      (0L to 1L).foreach { id =>
 //         val e =  idx.get( id )
 //         println( "Found : " + e )
 //      }
       val csr = idx.entities()
       try {
-         csr.iterator.foreach( e => println( "Found: " + e ))
+         csr.foreach( e => println( "Found: " + e ))
       } finally {
          csr.close()
       }
