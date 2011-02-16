@@ -66,11 +66,20 @@ object BaseTest {
       try {
          rcsr.foreach( e => println( "Found: " + e ))
       } finally {
-         rcsr.csr.close()
+         rcsr.close()
       }
    }
 
    def deleteSumdn( db: Database ) {
-      error( "TODO" )
+      val rcsr = new RichCursor[ Long, String ]( db.openCursor( null, null ))
+      try {
+         rcsr.headOption.foreach {
+            case e @ (key, value) =>
+               db.delete( null, key )
+               println( "Deleted: " + e )
+         }
+      } finally {
+         rcsr.close()
+      }
    }
 }

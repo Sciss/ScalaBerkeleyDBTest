@@ -129,6 +129,8 @@ object RichCursor {
 //   implicit val databaseEntryToLong : DatabaseEntry => Long = Bind.databaseEntryToLong( _ )
 //   implicit val databaseEntryToFloat : DatabaseEntry => Float = Bind.databaseEntryToFloat( _ )
 //   implicit val databaseEntryToDouble : DatabaseEntry => Double = Bind.databaseEntryToDouble( _ )
+
+   implicit def sink( rcsr: RichCursor[ _, _ ]) = rcsr.csr
 }
 class RichCursor[ K, V ]( val csr: Cursor )( implicit kView: DatabaseEntry => K, vView: DatabaseEntry => V ) extends Iterable[ (K, V) ] {
    import RichCursor._
