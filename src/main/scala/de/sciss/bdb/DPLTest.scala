@@ -5,7 +5,7 @@ import com.sleepycat.je.{Environment, EnvironmentConfig}
 import com.sleepycat.persist.{EntityStore, StoreConfig}
 import collection.JavaConversions._
 
-object BDBTest {
+object DPLTest {
    sealed trait CMD
    case object CMD_CREATE  extends CMD
    case object CMD_LIST    extends CMD
@@ -26,7 +26,7 @@ object BDBTest {
       val storeCfg = new StoreConfig()
          .setAllowCreate( cmd == CMD_CREATE )
       try {
-         val dir  = new File( "db" )
+         val dir  = new File( "db_dpl" )
          dir.mkdirs()
          val env  = new Environment( dir, envCfg )
          try {
@@ -97,26 +97,6 @@ object BDBTest {
          csr.foreach( e => println( "Found: " + e ))
       } finally {
          csr.close()
-      }
-   }
-
-   def test2 {
-      val envCfg = new EnvironmentConfig()
-         .setAllowCreate( true )
-         .setTransactional( true )
-      try {
-         val env = new Environment( new File( "db" ), envCfg )
-         try {
-            val misses = env.getStats( null ).getNCacheMiss
-            println( "Done. Misses = " + misses )
-         } finally {
-            env.cleanLog()
-            env.close()
-         }
-      } catch {
-         case e =>
-            e.printStackTrace()
-            System.exit( 1 )
       }
    }
 }

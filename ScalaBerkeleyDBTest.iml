@@ -22,7 +22,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/je-4.1.7.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib_managed/scala_2.8.1/compile/je-4.1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
