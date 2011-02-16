@@ -1,0 +1,5 @@
+h2. README
+
+A small test project for evaluating Berkeley DB JE in Scala. (C)opyright by Hanns Holger Rutz. All rights reserved. Covered by the GNU General Public License v2+. Berkeley DB JE is licensed under the Open Source License for Oracle Berkeley DB Java Edition. See licenses folder for details. Sourcecode for BDB JE is available online from "www.oracle.com":http://www.oracle.com/technetwork/database/berkeleydb/downloads/index.html
+
+This project builds with sbt 0.7.4. Run @sbt update compile@ to compile.
