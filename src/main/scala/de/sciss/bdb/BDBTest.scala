@@ -3,10 +3,12 @@ package de.sciss.bdb
 import java.io.File
 import com.sleepycat.je.{Environment, EnvironmentConfig}
 import com.sleepycat.persist.{EntityStore, StoreConfig}
+import collection.JavaConversions._
 
 object BDBTest {
    def main( args: Array[ String ]) {
-      test( false )
+      val write = args.headOption == Some( "-w" )
+      test( write )
    }
 
    def test( write: Boolean ) {
@@ -45,15 +47,22 @@ object BDBTest {
 
    def writeSumdn( store: EntityStore ) {
       val idx = store.getPrimaryIndex( classOf[ java.lang.Long ], classOf[ MyEntity ])
-      idx.put( new MyEntity( 0L, "Alpha" ))
-      idx.put( new MyEntity( 1L, "Beta" ))
+      List( "Alpha", "Beta", "Gamma", "Delta" ).zipWithIndex.foreach {
+         case (name, id) => idx.put( new MyEntity( id, name ))
+      }
    }
 
    def readSumdn( store: EntityStore ) {
       val idx  = store.getPrimaryIndex( classOf[ java.lang.Long ], classOf[ MyEntity ])
-      (0L to 1L).foreach { id =>
-         val e =  idx.get( id )
-         println( "Found : " + e )
+//      (0L to 1L).foreach { id =>
+//         val e =  idx.get( id )
+//         println( "Found : " + e )
+//      }
+      val csr = idx.entities()
+      try {
+         csr.iterator.foreach( e => println( "Found: " + e ))
+      } finally {
+         csr.close()
       }
    }
 
