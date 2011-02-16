@@ -2,6 +2,7 @@ package de.sciss.bdb
 
 import java.io.File
 import com.sleepycat.je.{Database, EnvironmentConfig, DatabaseConfig, Environment}
+import Bind._
 
 object BaseTest {
    sealed trait CMD
@@ -28,7 +29,7 @@ object BaseTest {
          dir.mkdirs()
          val env  = new Environment( dir, envCfg )
          try {
-            val db = env.openDatabase( null, "Database", dbCfg )
+            val db   = env.openDatabase( null, "Database", dbCfg )
             try {
                cmd match {
                   case CMD_CREATE =>
@@ -53,11 +54,20 @@ object BaseTest {
    }
 
    def writeSumdn( db: Database ) {
-      error( "TODO" )
+      List( "Alpha", "Beta", "Gamma", "Delta" ).zipWithIndex.foreach {
+         case (name, id) =>
+            db.put( null, id.toLong, name )
+            println( "Inserted: " + (id -> name) )
+      }
    }
 
    def readSumdn( db: Database ) {
-      error( "TODO" )
+      val rcsr = new RichCursor[ Long, String ]( db.openCursor( null, null ))
+      try {
+         rcsr.foreach( e => println( "Found: " + e ))
+      } finally {
+         rcsr.csr.close()
+      }
    }
 
    def deleteSumdn( db: Database ) {
