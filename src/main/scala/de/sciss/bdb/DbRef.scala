@@ -30,13 +30,18 @@ import concurrent.stm.Ref.View
 import concurrent.stm.{InTxnEnd, Txn, TxnLocal, InTxn, Ref}
 import concurrent.stm.Txn.ExternalDecider
 import collection.immutable.{Set => ISet}
-import com.sleepycat.je.{DatabaseEntry, Environment, Transaction, Database}
+import com.sleepycat.je.{LockMode, OperationStatus, DatabaseEntry, Environment, Transaction, Database}
 
-trait DbRef[ A ] extends Ref[ A ]
+// trait DbRef[ A ] extends Ref[ A ]
 
 class DbRefFactory( env: Environment ) {
-   def newRef[ K, V ]( db: Database, key: K, initialValue: V )( implicit om: OptManifest[ V ], kView: K => DatabaseEntry, vView: V => DatabaseEntry ) : DbRef[ V ] =
-      new Impl( db, key, Ref( initialValue ))( kView, vView )
+   def newRef[ K, V ]( db: Database, key: K, initialValue: V )
+                     ( implicit om: OptManifest[ V ], txn: Transaction, kView: K => DatabaseEntry,
+                       vView: V => DatabaseEntry, vDec: DatabaseEntry => V ) : Ref[ V ] = {
+      val e = new DatabaseEntry()
+      val v = if( db.get( txn, key, e, LockMode.DEFAULT ) == OperationStatus.SUCCESS ) vDec( e ) else initialValue
+      new Impl( db, key, Ref( v ))( kView, vView )
+   }
 
    private def errNotYet = error( "Not yet implemented" )
 
@@ -81,7 +86,7 @@ class DbRefFactory( env: Environment ) {
    }
 
    private class Impl[ @specialized K, @specialized V ]( db: Database, key: K, r: Ref[ V ])( implicit kView: K => DatabaseEntry, vView: V => DatabaseEntry )
-   extends DbRef[ V ] {
+   extends Ref[ V ] {
 
       me =>
 
